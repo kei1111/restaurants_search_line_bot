@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Gurunavi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use LINE\LINEBot;
@@ -15,18 +16,20 @@ class LineBotController extends Controller
         return view('linebot.index');
     }
 
-    public function parrot(Request $request)
+    public function restaurants(Request $request)
     {
         Log::debug($request->header());
         Log::debug($request->input());
 
-        $httpClient = new CurlHTTPClient(env('LINE_ACCESS_TOKEN'));
+        $httpClient = new CurlHTTPClient("7797ae0119ce875dbbab167d2a7bc2c2");
         $lineBot = new LINEBot($httpClient, ['channelSecret' => env('LINE_CHANNEL_SECRET')]);
 
         $signature = $request->header('x-line-signature');
+
         if (!$lineBot->validateSignature($request->getContent(), $signature)) {
             abort(400, 'Invalid signature');
         }
+
         $events = $lineBot->parseEventRequest($request->getContent(), $signature);
 
         Log::debug($events);
@@ -36,9 +39,25 @@ class LineBotController extends Controller
                 Log::debug('Non text message has come');
                 continue;
             }
+            $gurunavi = new Gurunavi();
+            $gurunaviResponse = $gurunavi->searchRestaurants($event->getText());
+
+            if (array_key_exists('error', $gurunaviResponse)) {
+                $replyText = $gurunaviResponse['error'][0]['message'];
+                $replyToken = $event->getReplyToken();
+                $lineBot->replyText($replyToken, $replyText);
+                continue;
+            }
+
+            $replyText = '';
+            foreach($gurunaviResponse['rest'] as $restaurant) {
+                $replyText .=
+                    $restaurant['name'] . "\n" .
+                    $restaurant['url'] . "\n" .
+                    "\n";
+            }
 
             $replyToken = $event->getReplyToken();
-            $replyText = $event->getText();
             $lineBot->replyText($replyToken, $replyText);
         }
     }
