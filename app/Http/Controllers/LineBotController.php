@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Gurunavi;
+use App\Services\RestaurantBubbleBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use LINE\LINEBot;
