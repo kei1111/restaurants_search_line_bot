@@ -10,7 +10,6 @@ class Gurunavi
 
     public function searchRestaurants(string $word): array
     {
-    // -- ここから追加
         $client = new Client();
         $response = $client
         ->get(self::RESTAURANTS_SEARCH_API_URL, [
@@ -22,6 +21,5 @@ class Gurunavi
             ]);
 
         return json_decode($response->getBody()->getContents(), true);
-    // -- ここまで追加
     }
 }
